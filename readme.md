@@ -1,4 +1,4 @@
-# Form Submission Project
+# Promotional Site
 
 This project is a simple **Node.js/Express** application that handles form submissions, stores them in a JSON file, and allows retrieval of submissions. It also serves static files and uses middleware like `body-parser` and `cors`.
 
