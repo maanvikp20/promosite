@@ -1,64 +1,112 @@
 const express = require("express");
-const fs = require("fs/promises");
+const fs = require("fs");
 const path = require("path");
-const morgan = require("morgan");
+const bodyParser = require("body-parser");
+const cors = require("cors");
 
 const app = express();
 const PORT = 5000;
 
-// Path to submissiondata.json
-const database = path.join(__dirname, "public/data/submissiondata.json");
+// Path to JSON submissions file
+const submissionsFile = path.join(__dirname, "public", "data", "submissionsdata.json");
 
-// --- Middleware ---
-// Parse JSON and form data
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Middleware
+app.use(cors());
+app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, "public"))); // Serve all public folder files
 
-// Logger
-app.use(morgan("dev"));
-
-// Serve static files (your website in /public)
-app.use(express.static(path.join(__dirname, "public")));
-
-// --- Helper functions ---
-async function readDB() {
-  try {
-    const rawData = await fs.readFile(database, "utf-8");
-    return JSON.parse(rawData);
-  } catch (err) {
-    return []; // Start fresh if file missing/empty
-  }
+// Ensure submissions file exists
+if (!fs.existsSync(submissionsFile)) {
+  fs.writeFileSync(submissionsFile, JSON.stringify([], null, 2));
 }
 
-async function writeDB(data) {
-  const text = JSON.stringify(data, null, 2);
-  await fs.writeFile(database, text, "utf-8");
-}
+// Serve index.html for root
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
-// --- Form submission route ---
-// This matches your form’s action="/submit"
-app.post("/submit", async (req, res) => {
+// POST endpoint for form submission
+app.post("/submit-form", (req, res) => {
   try {
-    const students = await readDB();
+    const { firstName, lastName, email, updates } = req.body;
 
-    // Grab everything from the form dynamically
-    const newEntry = {
-      id: Date.now().toString(), // auto-generate unique ID
-      ...req.body,              // save all form fields
+    // Validate required fields
+    if (!firstName || !lastName || !email) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Missing required fields: firstName, lastName, and email are required" 
+      });
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid email format" 
+      });
+    }
+
+    const submission = {
+      name: `${firstName.trim()} ${lastName.trim()}`,
+      email: email.trim().toLowerCase(),
+      interest: updates ? "Newsletter" : "More Information",
+      date: new Date().toISOString(),
+      fullData: req.body // Store all form data
     };
 
-    students.push(newEntry);
-    await writeDB(students);
+    // Read current submissions
+    let submissions = [];
+    try {
+      const fileContent = fs.readFileSync(submissionsFile, 'utf8');
+      submissions = JSON.parse(fileContent);
+    } catch (readError) {
+      console.log('Creating new submissions file...');
+      submissions = [];
+    }
 
-    // Redirect back to homepage (or show thank-you page)
-    res.redirect("/");
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("❌ Failed to save submission");
+    // Add new submission
+    submissions.push(submission);
+
+    // Write updated submissions
+    fs.writeFileSync(submissionsFile, JSON.stringify(submissions, null, 2));
+
+    console.log('Form submitted successfully:', submission);
+
+    res.status(200).json({ 
+      success: true, 
+      message: "Form submitted successfully", 
+      submission: submission 
+    });
+
+  } catch (error) {
+    console.error('Error processing form submission:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Internal server error. Please try again." 
+    });
   }
 });
 
-// --- Start Server ---
+// GET endpoint to retrieve submissions
+app.get("/get-submissions", (req, res) => {
+  try {
+    let submissions = [];
+    if (fs.existsSync(submissionsFile)) {
+      const fileContent = fs.readFileSync(submissionsFile, 'utf8');
+      submissions = JSON.parse(fileContent);
+    }
+    res.status(200).json({ success: true, submissions });
+  } catch (error) {
+    console.error('Error reading submissions:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Error reading submissions" 
+    });
+  }
+});
+
+// Start server
 app.listen(PORT, () => {
-  console.log(`✅ Server running at http://localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });
