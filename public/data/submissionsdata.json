@@ -1,3 +1,25 @@
 [
-  
+  {
+    "name": "mega mind",
+    "email": "megamind@e.com",
+    "interest": "Newsletter",
+    "date": "2025-09-29T22:07:59.337Z",
+    "fullData": {
+      "firstName": "mega",
+      "lastName": "mind",
+      "email": "megamind@e.com",
+      "phone": "602-545-3965",
+      "address1": "e",
+      "address2": "",
+      "city": "e",
+      "state": "GA",
+      "zip": "e",
+      "country": "GB",
+      "storeName": "mega",
+      "storeAddress": "",
+      "reason": "feedback",
+      "comments": "oh im megamind",
+      "updates": "on"
+    }
+  }
 ]

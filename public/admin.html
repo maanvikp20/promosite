@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin</title>
+</head>
+<body>
+  <p>admin</p>
+  <div class="datadisplay">
+    <p>Submissions will be displayed here</p>
+
+  </div>
+
+  <script>
+    async function fetchSubmissions() {
+      try {
+        const response = await fetch('/get-submissions', {
+          method: 'GET',
+          credentials: 'same-origin'
+        });
+        const data = await response.json();
+
+        displayRawJSON(data);
+      } catch (error) {
+        console.error('Error fetching submissions:', error);
+      }
+    }
+
+    function displayRawJSON(data) {
+      const container = document.querySelector('.datadisplay');
+      container.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+    }
+
+    // Fetch submissions on page load
+    fetchSubmissions();
+  </script>
+  </script>
+</body>
+</html>
