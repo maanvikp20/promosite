@@ -142,3 +142,10 @@ dist
 .svelte-kit
 
 # End of https://www.toptal.com/developers/gitignore/api/node
+
+# Ignore sensitive data and submissions
+public/data/submissionsdata.json
+public/data/approved.json
+
+# Environment variables
+.env
